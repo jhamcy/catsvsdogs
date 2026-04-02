@@ -84,7 +84,7 @@ canvas {
     pointer-events: auto;
 }
 
-#startScreen, #gameOverScreen, #selectionScreen {
+#startScreen, #gameOverScreen, #selectionScreen, #withdrawScreen {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -98,7 +98,7 @@ canvas {
     backdrop-filter: blur(8px);
 }
 
-#gameOverScreen, #selectionScreen { display: none; }
+#gameOverScreen, #selectionScreen, #withdrawScreen { display: none; }
 
 .box {
     background: linear-gradient(145deg, #1a1a1a, #000);
@@ -113,7 +113,7 @@ canvas {
 h2 { font-size: 32px; margin-bottom: 10px; color: #ffcc00; letter-spacing: 1px; }
 p { font-size: 20px; margin-bottom: 20px; opacity: 0.9; }
 
-.btn-group { display: flex; gap: 10px; justify-content: center; }
+.btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 button {
     padding: 15px 30px;
@@ -129,6 +129,15 @@ button {
 }
 
 button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b38f00; }
+
+#withdrawBtn {
+    background: #007dff;
+    color: white;
+    box-shadow: 0 4px 0 #0056b3;
+    display: none;
+    margin-top: 10px;
+    width: 100%;
+}
 
 .selection-grid {
     display: grid;
@@ -149,6 +158,17 @@ button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b38f00; }
 }
 
 .char-item.selected { border-color: #ffcc00; background: rgba(255,204,0,0.1); }
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ffcc00;
+    background: #222;
+    color: white;
+    font-size: 16px;
+}
 </style>
 </head>
 
@@ -171,10 +191,22 @@ button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b38f00; }
         <h1 id="mainEmojiDisplay" style="margin-bottom:20px; font-size: 60px;">🐈</h1>
         <h2>GAMBLE CROSSER</h2>
         <p>Wallet: 💰 <span id="recordDisplay">0</span></p>
-        <p style="font-size: 14px; color: #ffcc00;">Cost to Play: 10 Coins</p>
         <div class="btn-group">
             <button onclick="checkAndStart()">PLAY (-10)</button>
             <button onclick="openSelection()" style="background: #fff;">CHAR</button>
+            <button id="withdrawBtn" onclick="openWithdraw()">WITHDRAW TO GCASH</button>
+        </div>
+    </div>
+</div>
+
+<div id="withdrawScreen">
+    <div class="box">
+        <h2>GCASH WITHDRAW</h2>
+        <p style="font-size: 14px;">10,000 Coins = ₱100.00</p>
+        <input type="text" id="gcashNumber" placeholder="GCash Number (09XXXXXXXXX)">
+        <div class="btn-group">
+            <button onclick="processWithdraw()">SEND REQUEST</button>
+            <button onclick="closeWithdraw()" style="background: #fff;">CANCEL</button>
         </div>
     </div>
 </div>
@@ -205,10 +237,12 @@ const ctx = canvas.getContext('2d');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const selectionScreen = document.getElementById('selectionScreen');
+const withdrawScreen = document.getElementById('withdrawScreen');
 const cashOutBtn = document.getElementById('cashOutBtn');
+const withdrawBtn = document.getElementById('withdrawBtn');
 
 let gameState = {
-    totalCoins: parseInt(localStorage.getItem('crosserHighscore')) || 100, // Start with 100
+    totalCoins: parseInt(localStorage.getItem('crosserHighscore')) || 100,
     currentChar: localStorage.getItem('crosserChar') || '🐈'
 };
 
@@ -216,13 +250,16 @@ const characters = [
     { emoji: '🐈', name: 'Cat' }, { emoji: '🐕', name: 'Dog' },
     { emoji: '🐅', name: 'Tiger' }, { emoji: '🐆', name: 'Leopard' },
     { emoji: '🐖', name: 'Pig' }, { emoji: '🐇', name: 'Bunny' },
-    { emoji: '🐔', name: 'Chicken' }, { emoji: '🐢', name: 'Turtle' }
+    { emoji: '🐤', name: 'Chick Head' }, { emoji: '🐢', name: 'Turtle' }
 ];
 
 function updateUI() {
-    document.getElementById('recordDisplay').innerText = gameState.totalCoins;
-    document.getElementById('bankedCoins').innerText = gameState.totalCoins;
+    document.getElementById('recordDisplay').innerText = gameState.totalCoins.toLocaleString();
+    document.getElementById('bankedCoins').innerText = gameState.totalCoins.toLocaleString();
     document.getElementById('mainEmojiDisplay').innerText = gameState.currentChar;
+    
+    // Show withdraw button if user has 10,000+ coins
+    withdrawBtn.style.display = gameState.totalCoins >= 10000 ? "block" : "none";
 }
 
 function save() {
@@ -315,7 +352,7 @@ function handleInput() {
 }
 
 window.addEventListener('pointerdown', (e) => { 
-    if(gameRunning && e.target.id !== 'cashOutBtn') handleInput(); 
+    if(gameRunning && e.target.tagName !== 'BUTTON') handleInput(); 
 });
 
 function update() {
@@ -395,7 +432,7 @@ function cashOut() {
 function gameOver() {
     gameRunning = false;
     sfx.death();
-    document.getElementById("finalScore").innerText = gameState.totalCoins;
+    document.getElementById("finalScore").innerText = gameState.totalCoins.toLocaleString();
     gameOverScreen.style.display = "flex";
     cashOutBtn.style.display = "none";
 }
@@ -422,6 +459,29 @@ function openSelection() {
 function closeSelection() {
     selectionScreen.style.display = "none";
     startScreen.style.display = "flex";
+}
+
+function openWithdraw() {
+    startScreen.style.display = "none";
+    withdrawScreen.style.display = "flex";
+}
+
+function closeWithdraw() {
+    withdrawScreen.style.display = "none";
+    startScreen.style.display = "flex";
+}
+
+function processWithdraw() {
+    const num = document.getElementById('gcashNumber').value;
+    if(num.length < 11) {
+        alert("Enter a valid GCash number.");
+        return;
+    }
+    
+    gameState.totalCoins -= 10000;
+    save();
+    alert("Withdrawal request for 10,000 coins (₱100) sent to " + num + ". Processing takes 24 hours.");
+    closeWithdraw();
 }
 
 function renderSelection() {
