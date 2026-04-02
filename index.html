@@ -3,518 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Endless Road Crosser: Gamble Edition</title>
-
+<title>Perya Color Game</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; touch-action: none; }
-body {
-    background: #051405;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overscroll-behavior: none;
-}
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body {
+        background: #1a1a2e;
+        color: white;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
 
-canvas {
-    display: block;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-}
+    #wallet-ui {
+        position: absolute;
+        top: 20px;
+        background: rgba(0,0,0,0.6);
+        padding: 10px 25px;
+        border-radius: 50px;
+        border: 2px solid #ffcc00;
+        font-weight: 900;
+        font-size: 1.2rem;
+    }
 
-#topUI {
-    position: absolute;
-    top: 20px;
-    width: 100%;
-    display: none; /* Hidden until home page is passed */
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    z-index: 10;
-}
+    .dice-container {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 40px;
+    }
 
-.ui-container {
-    display: flex;
-    gap: 15px;
-}
+    .die {
+        width: 80px;
+        height: 80px;
+        border-radius: 15px;
+        background: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
-.ui-box {
-    background: rgba(0, 0, 0, 0.8);
-    padding: 10px 20px;
-    border-radius: 15px;
-    color: #fff;
-    font-weight: 800;
-    font-size: 18px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    text-align: center;
-}
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        width: 90%;
+        max-width: 400px;
+    }
 
-.gamble-box {
-    border-color: #ffcc00;
-    color: #ffcc00;
-    animation: glow 1.5s infinite alternate;
-}
+    .color-box {
+        aspect-ratio: 1;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: 900;
+        border: 4px solid transparent;
+        transition: transform 0.1s;
+        position: relative;
+    }
 
-@keyframes glow {
-    from { box-shadow: 0 0 5px #ffcc00; }
-    to { box-shadow: 0 0 20px #ffcc00; }
-}
+    .color-box:active { transform: scale(0.95); }
+    .color-box.selected { border-color: white; box-shadow: 0 0 15px white; }
 
-#bottomUI {
-    position: absolute;
-    bottom: 30px;
-    width: 100%;
-    text-align: center;
-    z-index: 10;
-}
+    .bet-tag {
+        position: absolute;
+        top: -10px;
+        background: #ffcc00;
+        color: black;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        display: none;
+    }
 
-#cashOutBtn {
-    display: none;
-    background: #4caf50;
-    color: white;
-    padding: 15px 40px;
-    border-radius: 50px;
-    font-weight: 900;
-    border: none;
-    box-shadow: 0 4px 0 #2e7d32;
-    font-size: 18px;
-    pointer-events: auto;
-}
+    #roll-btn {
+        margin-top: 30px;
+        padding: 15px 50px;
+        background: #ffcc00;
+        color: black;
+        border: none;
+        border-radius: 50px;
+        font-weight: 900;
+        font-size: 1.2rem;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #b38f00;
+    }
 
-/* Screens */
-#homePage, #startScreen, #gameOverScreen, #selectionScreen, #withdrawScreen {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.85);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    backdrop-filter: blur(8px);
-}
+    #roll-btn:disabled { background: #555; box-shadow: none; cursor: default; }
+    
+    #result-msg {
+        margin-top: 20px;
+        height: 30px;
+        font-weight: bold;
+        color: #4caf50;
+    }
 
-#startScreen, #gameOverScreen, #selectionScreen, #withdrawScreen { display: none; }
-
-.box {
-    background: linear-gradient(145deg, #1a1a1a, #000);
-    padding: 30px;
-    border-radius: 24px;
-    text-align: center;
-    border: 2px solid #ffcc00;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-    max-width: 90%;
-    width: 350px;
-}
-
-h1 { font-size: 40px; color: #ffcc00; margin-bottom: 5px; text-shadow: 0 4px 10px rgba(255,204,0,0.3); }
-h2 { font-size: 32px; margin-bottom: 10px; color: #ffcc00; letter-spacing: 1px; }
-p { font-size: 18px; margin-bottom: 20px; opacity: 0.8; }
-
-.btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
-button {
-    padding: 15px 30px;
-    border: none;
-    border-radius: 12px;
-    background: #ffcc00;
-    color: #000;
-    font-weight: 900;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #b38f00;
-    transition: transform 0.05s, box-shadow 0.05s;
-}
-
-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b38f00; }
-
-#withdrawBtn {
-    background: #007dff;
-    color: white;
-    box-shadow: 0 4px 0 #0056b3;
-    display: none;
-    margin-top: 10px;
-    width: 100%;
-}
-
-.selection-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 20px;
-    max-height: 40vh;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.char-item {
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 15px;
-    border: 2px solid transparent;
-    cursor: pointer;
-}
-
-.char-item.selected { border-color: #ffcc00; background: rgba(255,204,0,0.1); }
-
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 1px solid #ffcc00;
-    background: #222;
-    color: white;
-    font-size: 16px;
-}
+    /* Colors */
+    .c-red { background: #e63946; }
+    .c-blue { background: #457b9d; }
+    .c-yellow { background: #ffbe0b; color: black; }
+    .c-white { background: #f1faee; color: black; }
+    .c-pink { background: #ff006e; }
+    .c-green { background: #06d6a0; }
 </style>
 </head>
-
 <body>
 
-<div id="homePage">
-    <div class="box">
-        <div style="font-size: 80px; margin-bottom: 10px;">🎰</div>
-        <h1>WELCOME</h1>
-        <p>Endless Road Crosser<br><span style="color:#ffcc00">Gamble Edition</span></p>
-        <button onclick="enterGame()" style="width: 100%; font-size: 20px; padding: 20px;">ENTER GAME</button>
-        <p style="font-size: 12px; margin-top: 15px; opacity: 0.5;">Please play responsibly.</p>
-    </div>
+<div id="wallet-ui">💰 ₱<span id="balance">0</span></div>
+
+<div class="dice-container">
+    <div class="die" id="die1">?</div>
+    <div class="die" id="die2">?</div>
+    <div class="die" id="die3">?</div>
 </div>
 
-<div id="topUI">
-    <div class="ui-container">
-        <div class="ui-box">WALLET: 💰 <span id="bankedCoins">0</span></div>
-        <div class="ui-box gamble-box">POT: 💰 <span id="potentialCoins">0</span></div>
-    </div>
-    <div id="multiplierTag" style="color: #ffcc00; font-weight: 900; text-shadow: 0 0 10px #000;">X1 MULTIPLIER</div>
+<div class="color-grid">
+    <div class="color-box c-red" onclick="placeBet('red', this)">RED <span class="bet-tag">₱0</span></div>
+    <div class="color-box c-blue" onclick="placeBet('blue', this)">BLUE <span class="bet-tag">₱0</span></div>
+    <div class="color-box c-yellow" onclick="placeBet('yellow', this)">YELLOW <span class="bet-tag">₱0</span></div>
+    <div class="color-box c-white" onclick="placeBet('white', this)">WHITE <span class="bet-tag">₱0</span></div>
+    <div class="color-box c-pink" onclick="placeBet('pink', this)">PINK <span class="bet-tag">₱0</span></div>
+    <div class="color-box c-green" onclick="placeBet('green', this)">GREEN <span class="bet-tag">₱0</span></div>
 </div>
 
-<div id="bottomUI">
-    <button id="cashOutBtn" onclick="cashOut()">CASH OUT</button>
-</div>
+<div id="result-msg"></div>
 
-<div id="startScreen">
-    <div class="box">
-        <h1 id="mainEmojiDisplay" style="margin-bottom:20px; font-size: 60px;">🐈</h1>
-        <h2>MENU</h2>
-        <p>Wallet: 💰 <span id="recordDisplay">0</span></p>
-        <div class="btn-group">
-            <button onclick="checkAndStart()">PLAY (-10)</button>
-            <button onclick="openSelection()" style="background: #fff;">CHAR</button>
-            <button id="withdrawBtn" onclick="openWithdraw()">WITHDRAW TO GCASH</button>
-        </div>
-    </div>
-</div>
-
-<div id="withdrawScreen">
-    <div class="box">
-        <h2>GCASH WITHDRAW</h2>
-        <p style="font-size: 14px;">10,000 Coins = ₱100.00</p>
-        <input type="text" id="gcashNumber" placeholder="GCash Number (09XXXXXXXXX)">
-        <div class="btn-group">
-            <button onclick="processWithdraw()">SEND REQUEST</button>
-            <button onclick="closeWithdraw()" style="background: #fff;">CANCEL</button>
-        </div>
-    </div>
-</div>
-
-<div id="selectionScreen">
-    <div class="box">
-        <h2>SELECT PLAYER</h2>
-        <div class="selection-grid" id="selectionGrid"></div>
-        <button onclick="closeSelection()" style="margin-top:20px; background:#fff; width: 100%;">CONFIRM</button>
-    </div>
-</div>
-
-<div id="gameOverScreen">
-    <div class="box">
-        <h2 style="color: #ff4444;">BUSTED!</h2>
-        <p>You lost your bet!</p>
-        <p>Wallet: 💰 <span id="finalScore">0</span></p>
-        <button onclick="checkAndStart()">REPLAY (-10)</button>
-        <button onclick="showStart()" style="background: #fff; margin-top: 10px;">HOME</button>
-    </div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
+<button id="roll-btn" onclick="rollDice()">ROLL DICE</button>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const homePage = document.getElementById('homePage');
-const startScreen = document.getElementById('startScreen');
-const gameOverScreen = document.getElementById('gameOverScreen');
-const selectionScreen = document.getElementById('selectionScreen');
-const withdrawScreen = document.getElementById('withdrawScreen');
-const cashOutBtn = document.getElementById('cashOutBtn');
-const withdrawBtn = document.getElementById('withdrawBtn');
-const topUI = document.getElementById('topUI');
+    let wallet = parseInt(localStorage.getItem('crosserHighscore')) || 1000;
+    let currentBets = {};
+    const colors = ['red', 'blue', 'yellow', 'white', 'pink', 'green'];
+    const colorHex = {
+        red: '#e63946', blue: '#457b9d', yellow: '#ffbe0b',
+        white: '#f1faee', pink: '#ff006e', green: '#06d6a0'
+    };
 
-let gameState = {
-    totalCoins: parseInt(localStorage.getItem('crosserHighscore')) || 100,
-    currentChar: localStorage.getItem('crosserChar') || '🐈'
-};
-
-const characters = [
-    { emoji: '🐈', name: 'Cat' }, { emoji: '🐕', name: 'Dog' },
-    { emoji: '🐅', name: 'Tiger' }, { emoji: '🐆', name: 'Leopard' },
-    { emoji: '🐖', name: 'Pig' }, { emoji: '🐇', name: 'Bunny' },
-    { emoji: '🐤', name: 'Chick Head' }, { emoji: '🐢', name: 'Turtle' }
-];
-
-function enterGame() {
-    homePage.style.display = 'none';
-    startScreen.style.display = 'flex';
-    topUI.style.display = 'flex';
-    sfx.coin(); // Play a sound on entry
-    updateUI();
-}
-
-function updateUI() {
-    document.getElementById('recordDisplay').innerText = gameState.totalCoins.toLocaleString();
-    document.getElementById('bankedCoins').innerText = gameState.totalCoins.toLocaleString();
-    document.getElementById('mainEmojiDisplay').innerText = gameState.currentChar;
-    withdrawBtn.style.display = gameState.totalCoins >= 10000 ? "block" : "none";
-}
-
-function save() {
-    localStorage.setItem('crosserHighscore', gameState.totalCoins);
-    localStorage.setItem('crosserChar', gameState.currentChar);
-    updateUI();
-}
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const sfx = {
-    play(freq, type, duration, vol = 0.1) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-    },
-    jump() { this.play(400, 'sine', 0.2); },
-    point(mult) { this.play(880 + (mult * 50), 'square', 0.05, 0.03); },
-    death() { this.play(80, 'sawtooth', 0.6); },
-    coin() { this.play(1200, 'sine', 0.4, 0.05); }
-};
-
-let potentialCoins, currentMultiplier, laneWidth = 110, gameRunning, cameraX, nextLaneX;
-const player = { x:0, y:0, targetX:0, isHopping:false, jumpProgress:0 };
-let trafficLanes = [];
-
-function checkAndStart() {
-    if (gameState.totalCoins >= 10) {
-        gameState.totalCoins -= 10;
-        save();
-        startGame();
-    } else {
-        alert("Not enough coins! Need 10.");
+    function updateUI() {
+        document.getElementById('balance').innerText = wallet.toLocaleString();
+        localStorage.setItem('crosserHighscore', wallet);
     }
-}
 
-function startGame() {
-    startScreen.style.display = "none";
-    gameOverScreen.style.display = "none";
-    initGame();
-    loop();
-}
-
-function initGame() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    potentialCoins = 0;
-    currentMultiplier = 1;
-    nextLaneX = 350; 
-    trafficLanes = [];
-    cashOutBtn.style.display = "none";
-    document.getElementById('potentialCoins').innerText = potentialCoins;
-    document.getElementById('multiplierTag').innerText = `X${currentMultiplier} MULTIPLIER`;
-    generateLanes(15);
-    player.x = 50; 
-    player.targetX = player.x;
-    player.y = canvas.height / 2;
-    cameraX = 0;
-    gameRunning = true;
-    updateUI();
-}
-
-function generateLanes(count) {
-    for (let i = 0; i < count; i++) {
-        let dir = Math.random() > 0.5 ? 1 : -1;
-        let speed = (2.5 + trafficLanes.length/10) * dir;
-        let cars = [];
-        for (let j = 0; j < 3; j++) {
-            cars.push({ y: Math.random() * canvas.height });
-        }
-        trafficLanes.push({ x: nextLaneX, speed: speed, isPassed: false, cars: cars });
-        nextLaneX += laneWidth;
+    function placeBet(color, el) {
+        if (wallet < 10) return alert("Low balance!");
+        
+        wallet -= 10;
+        currentBets[color] = (currentBets[color] || 0) + 10;
+        
+        const tag = el.querySelector('.bet-tag');
+        tag.innerText = "₱" + currentBets[color];
+        tag.style.display = "block";
+        el.classList.add('selected');
+        
+        updateUI();
     }
-}
 
-function handleInput() {
-    if (!gameRunning || player.isHopping) return;
-    sfx.jump();
-    let jumpDist = (player.x >= 200) ? laneWidth : (trafficLanes[0].x + laneWidth/2) - player.x;
-    player.targetX = player.x + jumpDist;
-    player.isHopping = true;
-    player.jumpProgress = 0;
-}
+    function rollDice() {
+        const betColors = Object.keys(currentBets);
+        if (betColors.length === 0) return alert("Place a bet first!");
 
-window.addEventListener('pointerdown', (e) => { 
-    if(gameRunning && e.target.tagName !== 'BUTTON') handleInput(); 
-});
+        const btn = document.getElementById('roll-btn');
+        btn.disabled = true;
+        document.getElementById('result-msg').innerText = "Rolling...";
 
-function update() {
-    if (!gameRunning) return;
-    if (player.isHopping) {
-        player.jumpProgress += 0.12;
-        player.x += (player.targetX - player.x) * 0.25;
-        if (player.jumpProgress >= 1) {
-            player.x = player.targetX;
-            player.isHopping = false;
-            trafficLanes.forEach(lane => {
-                const laneCenter = lane.x + laneWidth/2;
-                if (!lane.isPassed && Math.abs(player.x - laneCenter) < 10) {
-                    lane.isPassed = true;
-                    currentMultiplier++;
-                    potentialCoins += currentMultiplier * 5;
-                    sfx.point(currentMultiplier);
-                    document.getElementById('potentialCoins').innerText = potentialCoins;
-                    document.getElementById('multiplierTag').innerText = `X${currentMultiplier} MULTIPLIER`;
-                    cashOutBtn.style.display = "block";
-                }
+        let results = [];
+        const diceElements = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')];
+
+        // Animate rolling
+        let rollCount = 0;
+        let interval = setInterval(() => {
+            diceElements.forEach(d => {
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                d.style.background = colorHex[randomColor];
+                d.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
             });
-        }
-    }
-    if (player.x > nextLaneX - (canvas.width * 1.5)) generateLanes(10);
-    cameraX += ((player.x - canvas.width / 3) - cameraX) * 0.1;
-    if (cameraX < 0) cameraX = 0;
+            rollCount++;
+            if (rollCount > 15) {
+                clearInterval(interval);
+                finalizeRoll();
+            }
+        }, 100);
 
-    trafficLanes.forEach(lane => {
-        lane.cars.forEach(car => {
-            car.y += lane.speed;
-            if (car.y > canvas.height + 50) car.y = -50;
-            if (car.y < -50) car.y = canvas.height + 50;
-            if (!lane.isPassed && Math.abs(player.x - (lane.x + laneWidth/2)) < 40 && Math.abs(player.y - car.y) < 45) gameOver();
-        });
-    });
-}
+        function finalizeRoll() {
+            results = [
+                colors[Math.floor(Math.random() * colors.length)],
+                colors[Math.floor(Math.random() * colors.length)],
+                colors[Math.floor(Math.random() * colors.length)]
+            ];
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.translate(-cameraX, 0);
-    ctx.fillStyle = "#1a3a16";
-    ctx.fillRect(0, 0, 350, canvas.height);
-    trafficLanes.forEach(lane => {
-        ctx.fillStyle = lane.isPassed ? "#0a0a0a" : "#181818";
-        ctx.fillRect(lane.x, 0, laneWidth, canvas.height);
-        if (!lane.isPassed) {
-            lane.cars.forEach(car => {
-                ctx.font = "50px serif";
-                ctx.textAlign = "center";
-                ctx.fillText(lane.speed > 0 ? "🚘" : "🚙", lane.x + laneWidth/2, car.y);
+            results.forEach((res, i) => {
+                diceElements[i].style.background = colorHex[res];
+                diceElements[i].style.transform = "rotate(0deg) scale(1.1)";
+                diceElements[i].innerText = ""; // Clear text
             });
+
+            calculateWin(results);
         }
-    });
-    let jumpY = player.isHopping ? Math.sin(player.jumpProgress * Math.PI) * 70 : 0;
-    ctx.save();
-    ctx.translate(player.x, player.y - jumpY);
-    ctx.scale(-1, 1); 
-    ctx.font = "65px serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(gameState.currentChar, 0, 0);
-    ctx.restore();
-    ctx.restore();
-}
-
-function cashOut() {
-    if (!gameRunning) return;
-    gameRunning = false;
-    gameState.totalCoins += potentialCoins;
-    sfx.coin();
-    save();
-    showStart();
-}
-
-function gameOver() {
-    gameRunning = false;
-    sfx.death();
-    document.getElementById("finalScore").innerText = gameState.totalCoins.toLocaleString();
-    gameOverScreen.style.display = "flex";
-    cashOutBtn.style.display = "none";
-}
-
-function showStart() {
-    gameOverScreen.style.display = "none";
-    startScreen.style.display = "flex";
-    cashOutBtn.style.display = "none";
-    updateUI();
-}
-
-function loop() {
-    update();
-    draw();
-    if(gameRunning) requestAnimationFrame(loop);
-}
-
-function openSelection() {
-    startScreen.style.display = "none";
-    selectionScreen.style.display = "flex";
-    renderSelection();
-}
-
-function closeSelection() {
-    selectionScreen.style.display = "none";
-    startScreen.style.display = "flex";
-}
-
-function openWithdraw() {
-    startScreen.style.display = "none";
-    withdrawScreen.style.display = "flex";
-}
-
-function closeWithdraw() {
-    withdrawScreen.style.display = "none";
-    startScreen.style.display = "flex";
-}
-
-function processWithdraw() {
-    const num = document.getElementById('gcashNumber').value;
-    if(num.length < 11) {
-        alert("Enter a valid GCash number.");
-        return;
     }
-    gameState.totalCoins -= 10000;
-    save();
-    alert("Withdrawal request for 10,000 coins (₱100) sent to " + num + ". Processing takes 24 hours.");
-    closeWithdraw();
-}
 
-function renderSelection() {
-    const grid = document.getElementById('selectionGrid');
-    grid.innerHTML = '';
-    characters.forEach(char => {
-        const item = document.createElement('div');
-        item.className = `char-item ${gameState.currentChar === char.emoji ? 'selected' : ''}`;
-        item.innerHTML = `<span style="transform: scaleX(-1); display: inline-block; font-size:40px;">${char.emoji}</span>`;
-        item.onclick = () => { gameState.currentChar = char.emoji; save(); renderSelection(); };
-        grid.appendChild(item);
-    });
-}
+    function calculateWin(results) {
+        let totalWin = 0;
+        let winDetails = "";
+
+        for (let betColor in currentBets) {
+            const matches = results.filter(r => r === betColor).length;
+            const betAmount = currentBets[betColor];
+
+            if (matches === 1) {
+                totalWin += betAmount * 2;
+            } else if (matches === 2) {
+                totalWin += betAmount * 3;
+            } else if (matches === 3) {
+                totalWin += betAmount * 5;
+            }
+        }
+
+        wallet += totalWin;
+        
+        if (totalWin > 0) {
+            document.getElementById('result-msg').innerText = `YOU WON ₱${totalWin}!`;
+            document.getElementById('result-msg').style.color = "#4caf50";
+        } else {
+            document.getElementById('result-msg').innerText = "Better luck next time!";
+            document.getElementById('result-msg').style.color = "#ff4444";
+        }
+
+        // Reset bets
+        currentBets = {};
+        document.querySelectorAll('.bet-tag').forEach(t => t.style.display = "none");
+        document.querySelectorAll('.color-box').forEach(b => b.classList.remove('selected'));
+        document.getElementById('roll-btn').disabled = false;
+        updateUI();
+    }
+
+    updateUI();
 </script>
 
 </body>
