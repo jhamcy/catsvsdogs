@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #1a1a2e; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #game-grid { display: grid; grid-template-columns: repeat(5, 60px); gap: 10px; margin-top: 20px; }
+        .cell { width: 60px; height: 60px; background: #16213e; border: 2px solid #0f3460; border-radius: 8px; 
+                display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.2s; }
+        .cell:hover { background: #0f3460; }
+        .revealed { cursor: default; background: #e94560 !important; }
+        .win { background: #00d2ff !important; }
+        #status { margin-top: 20px; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+    <h2>Find the Cats 🐱</h2>
+    <p>Avoid the Dogs 🐶!</p>
+    <div id="status">Multiplier: 1.0x</div>
+    <div id="game-grid"></div>
+    <button onclick="resetGame()" style="margin-top: 20px; padding: 10px 20px; cursor:pointer;">Reset Game</button>
+
+<script>
+    const gridDisplay = document.getElementById('game-grid');
+    const statusDisplay = document.getElementById('status');
+    let multiplier = 1.0;
+    let gameOver = false;
+
+    // 0 = Cat, 1 = Dog. Let's put 5 Dogs in a 25-tile grid.
+    let board = [];
+
+    function resetGame() {
+        gridDisplay.innerHTML = '';
+        board = Array(20).fill('🐱').concat(Array(5).fill('🐶'));
+        board.sort(() => Math.random() - 0.5); // Shuffle
+        multiplier = 1.0;
+        gameOver = false;
+        statusDisplay.innerText = "Multiplier: 1.0x";
+        createBoard();
+    }
+
+    function createBoard() {
+        board.forEach((item, index) => {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.addEventListener('click', () => reveal(cell, index));
+            gridDisplay.appendChild(cell);
+        });
+    }
+
+    function reveal(cell, index) {
+        if (gameOver || cell.classList.contains('revealed')) return;
+
+        cell.classList.add('revealed');
+        const result = board[index];
+        cell.innerText = result;
+
+        if (result === '🐶') {
+            cell.style.background = "#ff4d4d";
+            statusDisplay.innerText = "GAME OVER! You found a Dog.";
+            gameOver = true;
+        } else {
+            cell.classList.add('win');
+            multiplier += 0.2;
+            statusDisplay.innerText = `Multiplier: ${multiplier.toFixed(1)}x`;
+        }
+    }
+
+    resetGame();
+</script>
+</body>
+</html>
